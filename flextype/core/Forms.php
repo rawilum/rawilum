@@ -90,6 +90,7 @@ class Forms
         $form .= $this->_actionHiddenField();
 
         // Extends fieldsets
+        /*
         if (isset($fieldset['extends'])) {
             if (is_array($fieldset['extends'])) {
                 foreach ($fieldset['extends'] as $extends) {
@@ -99,9 +100,61 @@ class Forms
             } else {
                 $extends_fieldset_content = Filesystem::read($this->flextype->fieldsets->getFileLocation($fieldset['extends']));
                 $extends_fieldset = $this->flextype->parser->decode($extends_fieldset_content, 'yaml');
-                $fieldset = array_replace_recursive($extends_fieldset, $fieldset);
+                $fieldset = array_merge_recursive($extends_fieldset, $fieldset);
             }
         }
+        */
+
+        foreach ($fieldset['sections'] as $section_name => $section_body) {
+            //echo $section_body[$section_name];
+            echo '<pre>';
+            //print_r($section_body);
+            echo '</pre>';
+
+            if (is_array($fieldset['sections'][$section_name])) {
+                if (isset($section_body['import'])) {
+                    // Get fieldset to import
+                    $import_fieldset_content = Filesystem::read($this->flextype->fieldsets->getFileLocation($section_body['import']));
+
+                    // Decode fieldset
+                    $import_fieldset = $this->flextype->parser->decode($import_fieldset_content, 'yaml');
+
+                    // Merge fieldset sections
+                    $fieldset['sections'][$section_name] = $import_fieldset['sections'][$section_name];
+                }
+            } else {
+                $parts = explode('/', $section_body);
+                $fieldset_file = $parts[0];
+                $fieldset_name = $parts[1];
+
+                // Get fieldset to import
+                $import_fieldset_content = Filesystem::read($this->flextype->fieldsets->getFileLocation($fieldset_file));
+
+                // Decode fieldset
+                $import_fieldset = $this->flextype->parser->decode($import_fieldset_content, 'yaml');
+
+                // Merge fieldset sections
+                $fieldset['sections'][$section_name] = $import_fieldset['sections'][$fieldset_name];
+            }
+
+            /*
+            if (isset($section_body['import'])) {
+                // Get fieldset to import
+                $import_fieldset_content = Filesystem::read($this->flextype->fieldsets->getFileLocation($section_body['import']));
+
+                // Decode fieldset
+                $import_fieldset = $this->flextype->parser->decode($import_fieldset_content, 'yaml');
+
+                // Merge fieldset sections
+                $fieldset['sections'][$section_name] = $import_fieldset['sections'][$section_name];
+            }*/
+        }
+
+
+        echo '<pre>';
+        print_r($fieldset);
+        echo '</pre>';
+        //die();
 
         // Go through all sections
         if (count($fieldset['sections']) > 0) {
