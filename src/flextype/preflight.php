@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Flextype\App\Foundation\Flextype;
 use Flextype\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml as SymfonyYaml;
 
@@ -72,4 +73,4 @@ if (Filesystem::has($preflight_flextype_path . '/' . $cache_id . '.php')) {
 }
 
 // Store flextype merged data in the flextype registry.
-$registry->set('flextype', $flextype_data);
+Flextype::getInstance()->registry->set('flextype', $flextype_data);

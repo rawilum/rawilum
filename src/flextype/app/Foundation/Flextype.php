@@ -74,26 +74,33 @@ class Flextype
      */
     private static $instances = [];
 
+    private $registry;
+
     /**
      * The Singleton's constructor should always be private to prevent direct
      * construction calls with the `new` operator.
      */
     protected function __construct() {
 
+        $this->startSession();
         $this->_initDraft();
+    }
+
+    /**
+     * Start the session
+     */
+    protected function startSession()
+    {
+        Session::start();
     }
 
     public function _initDraft()
     {
-        /**
-         * Start the session
-         */
-        Session::start();
 
         /**
          * Init Registry
          */
-        $registry = new Registry();
+        $this->registry = new Registry();
 
         /**
          * Preflight the Flextype
@@ -105,33 +112,33 @@ class Flextype
          */
         $app = new App([
             'settings' => [
-                'debug' => $registry->get('flextype.settings.errors.display'),
-                'whoops.editor' => $registry->get('flextype.settings.whoops.editor'),
-                'whoops.page_title' => $registry->get('flextype.settings.whoops.page_title'),
-                'displayErrorDetails' => $registry->get('flextype.settings.display_error_details'),
-                'addContentLengthHeader' => $registry->get('flextype.settings.add_content_length_header'),
-                'routerCacheFile' => $registry->get('flextype.settings.router_cache_file'),
-                'determineRouteBeforeAppMiddleware' => $registry->get('flextype.settings.determine_route_before_app_middleware'),
-                'outputBuffering' => $registry->get('flextype.settings.output_buffering'),
-                'responseChunkSize' => $registry->get('flextype.settings.response_chunk_size'),
-                'httpVersion' => $registry->get('flextype.settings.http_version'),
+                'debug' => $this->registry->get('flextype.settings.errors.display'),
+                'whoops.editor' => $this->registry->get('flextype.settings.whoops.editor'),
+                'whoops.page_title' => $this->registry->get('flextype.settings.whoops.page_title'),
+                'displayErrorDetails' => $this->registry->get('flextype.settings.display_error_details'),
+                'addContentLengthHeader' => $this->registry->get('flextype.settings.add_content_length_header'),
+                'routerCacheFile' => $this->registry->get('flextype.settings.router_cache_file'),
+                'determineRouteBeforeAppMiddleware' => $this->registry->get('flextype.settings.determine_route_before_app_middleware'),
+                'outputBuffering' => $this->registry->get('flextype.settings.output_buffering'),
+                'responseChunkSize' => $this->registry->get('flextype.settings.response_chunk_size'),
+                'httpVersion' => $this->registry->get('flextype.settings.http_version'),
             ],
         ]);
 
-        $this->initDependencies($app);
+        $this->registerDependencies($app);
 
-
+dd($this->registry->get('flextype.settings.charset'));
         /**
          * Set internal encoding
          */
         function_exists('mb_language') and mb_language('uni');
-        function_exists('mb_regex_encoding') and mb_regex_encoding($flextype['registry']->get('flextype.settings.charset'));
-        function_exists('mb_internal_encoding') and mb_internal_encoding($flextype['registry']->get('flextype.settings.charset'));
+        function_exists('mb_regex_encoding') and mb_regex_encoding($this->registry->get('flextype.settings.charset'));
+        function_exists('mb_internal_encoding') and mb_internal_encoding($this->registry->get('flextype.settings.charset'));
 
         /**
          * Display Errors
          */
-        if ($flextype['registry']->get('flextype.settings.errors.display')) {
+        if ($this->registry->get('flextype.settings.errors.display')) {
 
             /**
              * Add WhoopsMiddleware
@@ -144,14 +151,14 @@ class Flextype
         /**
          * Set default timezone
          */
-        date_default_timezone_set($flextype['registry']->get('flextype.settings.timezone'));
+        date_default_timezone_set($this->registry->get('flextype.settings.timezone'));
 
         /**
          * Init shortocodes
          *
          * Load Flextype Shortcodes from directory /flextype/app/Support/Parsers/Shortcodes/ based on flextype.settings.shortcode.shortcodes array
          */
-        $shortcodes = $flextype['registry']->get('flextype.settings.shortcode.shortcodes');
+        $shortcodes = $this->registry->get('flextype.settings.shortcode.shortcodes');
 
         foreach ($shortcodes as $shortcode_name => $shortcode) {
             $shortcode_file_path = ROOT_DIR . '/src/flextype/app/Support/Parsers/Shortcodes/' . str_replace("_", '', ucwords($shortcode_name, "_")) . 'Shortcode.php';
@@ -167,7 +174,7 @@ class Flextype
          *
          * Load Flextype Entries fields from directory /flextype/app/Foundation/Entries/Fields/ based on flextype.settings.entries.fields array
          */
-        $entry_fields = $flextype['registry']->get('flextype.settings.entries.fields');
+        $entry_fields = $this->registry->get('flextype.settings.entries.fields');
 
         foreach ($entry_fields as $field_name => $field) {
             $entry_field_file_path = ROOT_DIR . '/src/flextype/app/Foundation/Entries/Fields/' . str_replace("_", '', ucwords($field_name, "_")) . 'Field.php';
@@ -219,7 +226,9 @@ class Flextype
             return new CallableResolver($flextype);
         };
 
-        $flextype['registry'] = function () use ($registry) {
+        $registry = $this->registry;
+
+        $this->registry = function () use ($registry) {
             return $registry;
         };
 
@@ -236,17 +245,17 @@ class Flextype
 
         $flextype['slugify'] = function ($flextype) {
             return new Slugify([
-                'separator' => $flextype['registry']->get('flextype.settings.slugify.separator'),
-                'lowercase' => $flextype['registry']->get('flextype.settings.slugify.lowercase'),
-                'trim' => $flextype['registry']->get('flextype.settings.slugify.trim'),
-                'regexp' => $flextype['registry']->get('flextype.settings.slugify.regexp'),
-                'lowercase_after_regexp' => $flextype['registry']->get('flextype.settings.slugify.lowercase_after_regexp'),
-                'strip_tags' => $flextype['registry']->get('flextype.settings.slugify.strip_tags'),
+                'separator' => $this->registry->get('flextype.settings.slugify.separator'),
+                'lowercase' => $this->registry->get('flextype.settings.slugify.lowercase'),
+                'trim' => $this->registry->get('flextype.settings.slugify.trim'),
+                'regexp' => $this->registry->get('flextype.settings.slugify.regexp'),
+                'lowercase_after_regexp' => $this->registry->get('flextype.settings.slugify.lowercase_after_regexp'),
+                'strip_tags' => $this->registry->get('flextype.settings.slugify.strip_tags'),
             ]);
         };
 
         $flextype['cache_adapter'] = function ($flextype) {
-            $driver_name = $flextype['registry']->get('flextype.settings.cache.driver');
+            $driver_name = $this->registry->get('flextype.settings.cache.driver');
 
             if (! $driver_name || $driver_name === 'auto') {
                 if (extension_loaded('apcu')) {
@@ -305,7 +314,7 @@ class Flextype
         $flextype['images'] = function ($flextype) {
 
             // Get images settings
-            $imagesSettings = $registry->get('flextype.settings.image');
+            $imagesSettings = $this->registry->get('flextype.settings.image');
 
             // Set source filesystem
             $source = new Filesystem(
